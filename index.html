@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NóminaMX — Calculadora de Nómina CDMX 2024</title>
+<meta name="description" content="Calculadora de nómina para Ciudad de México. ISR, IMSS, INFONAVIT, prestaciones de ley. Actualizada 2024."/>
+<meta name="author" content="TiTi-Apps"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+/* ── VARIABLES ── */
+:root{
+  --bg:#0a0f1e;
+  --surface:#111827;
+  --surface2:#1a2236;
+  --surface3:#222d42;
+  --accent:#00e5a0;
+  --accent2:#0d7fff;
+  --accent3:#ff6b6b;
+  --amber:#ff9f43;
+  --text:#e8edf5;
+  --muted:#8899b8;
+  --border:#2a3550;
+  --font-head:'Syne',sans-serif;
+  --font-mono:'IBM Plex Mono',monospace;
+  --radius:10px;
+  --radius-sm:7px;
+}
+
+/* ── BASE ── */
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-head);
+  min-height:100vh;
+  line-height:1.5;
+}
+
+/* ── LAYOUT ── */
+.app{
+  display:grid;
+  grid-template-columns:340px 1fr;
+  min-height:100vh;
+}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  padding:28px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow-y:auto;
+}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-track{background:transparent}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+/* logo */
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.logo-icon{
+  width:38px;height:38px;
+  background:var(--accent);
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.logo-icon svg{width:20px;height:20px;fill:var(--bg)}
+.logo-text{font-size:14px;font-weight:800;letter-spacing:.06em;color:var(--accent);text-transform:uppercase}
+.logo-sub{font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:1px}
+
+/* section label */
+.section-label{
+  font-size:10px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px;
+}
+
+/* fields */
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+.field input,.field select{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  color:var(--text);
+  font-family:var(--font-mono);
+  font-size:15px;
+  padding:10px 14px;
+  border-radius:8px;
+  outline:none;
+  transition:border-color .2s,box-shadow .2s;
+  width:100%;
+  appearance:none;
+}
+.field input:focus,.field select:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(0,229,160,.1);
+}
+.salary-wrap{position:relative}
+.salary-prefix{
+  position:absolute;left:14px;top:50%;
+  transform:translateY(-50%);
+  color:var(--accent);font-family:var(--font-mono);font-size:15px;font-weight:500;
+  pointer-events:none;
+}
+.salary-wrap input{padding-left:26px}
+
+/* toggles */
+.toggle-group{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.toggle-btn{
+  padding:8px 4px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:7px;
+  color:var(--muted);
+  font-family:var(--font-head);
+  font-size:12px;font-weight:600;
+  cursor:pointer;text-align:center;
+  transition:all .2s;letter-spacing:.03em;
+  user-select:none;
+}
+.toggle-btn.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.toggle-btn:hover:not(.active){border-color:var(--muted);color:var(--text)}
+
+/* calc button */
+.calc-btn{
+  background:var(--accent);color:var(--bg);
+  border:none;padding:14px;
+  border-radius:10px;
+  font-family:var(--font-head);font-size:14px;font-weight:800;
+  cursor:pointer;letter-spacing:.05em;text-transform:uppercase;
+  transition:transform .1s,opacity .15s;
+  margin-top:4px;width:100%;
+}
+.calc-btn:hover{opacity:.88}
+.calc-btn:active{transform:scale(.97)}
+
+/* info box */
+.info-box{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:12px 14px;
+  font-size:11px;color:var(--muted);
+  line-height:1.65;font-family:var(--font-mono);
+}
+.info-box strong{color:var(--text)}
+
+/* ── MAIN ── */
+.main{padding:28px 32px;overflow-y:auto}
+
+.top-bar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.main-title{font-size:28px;font-weight:800;letter-spacing:-.01em;line-height:1.1;margin-bottom:4px}
+.main-title span{color:var(--accent)}
+.main-sub{font-size:12px;color:var(--muted);font-family:var(--font-mono)}
+
+/* action buttons */
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.action-btn{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--surface2);border:1px solid var(--border);
+  color:var(--text);padding:9px 16px;border-radius:8px;
+  font-size:12px;font-weight:600;
+  text-decoration:none;cursor:pointer;
+  transition:border-color .2s,background .2s;
+  letter-spacing:.04em;font-family:var(--font-head);
+  white-space:nowrap;
+}
+.action-btn:hover{border-color:var(--accent);background:var(--surface3)}
+.action-btn svg{width:15px;height:15px;fill:currentColor;flex-shrink:0}
+.action-btn.primary{background:var(--surface3);border-color:var(--accent2);color:var(--accent2)}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.metric{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:16px 18px;
+  position:relative;overflow:hidden;
+}
+.metric::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:12px 12px 0 0}
+.metric.green::before{background:var(--accent)}
+.metric.blue::before{background:var(--accent2)}
+.metric.red::before{background:var(--accent3)}
+.metric-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.metric-val{font-size:22px;font-weight:800;font-family:var(--font-mono);letter-spacing:-.02em;word-break:break-all}
+.metric.green .metric-val{color:var(--accent)}
+.metric.blue .metric-val{color:var(--accent2)}
+.metric.red .metric-val{color:var(--accent3)}
+.metric-pct{font-size:11px;color:var(--muted);margin-top:3px;font-family:var(--font-mono)}
+
+/* gauges */
+.gauge-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.gauge-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px}
+.gauge-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:8px}
+.gauge-bar-wrap{height:5px;background:var(--surface2);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.gauge-bar{height:100%;border-radius:3px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+.gauge-pct{font-size:12px;font-family:var(--font-mono);font-weight:500}
+
+/* breakdown */
+.breakdown-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.breakdown-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.breakdown-header{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+.breakdown-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.breakdown-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.period-tag{
+  font-family:var(--font-mono);font-size:10px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:4px;padding:2px 7px;color:var(--muted);
+  margin-left:auto;
+}
+.row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 18px;font-size:12px;transition:background .15s;
+}
+.row:hover{background:var(--surface2)}
+.row-label{color:var(--muted);line-height:1.3}
+.row-label em{
+  font-style:normal;font-size:10px;color:var(--border);
+  font-family:var(--font-mono);display:block;margin-top:1px;
+}
+.row-val{font-family:var(--font-mono);font-size:12px;font-weight:500;white-space:nowrap;margin-left:8px}
+.row-val.neg{color:var(--accent3)}
+.row-val.pos{color:var(--accent)}
+.row-val.neu{color:var(--accent2)}
+.row-divider{height:1px;background:var(--border);margin:5px 18px}
+.row-total{
+  display:flex;justify-content:space-between;
+  padding:11px 18px;background:var(--surface2);
+  border-top:1px solid var(--border);
+  font-weight:700;font-family:var(--font-mono);font-size:13px;
+}
+
+/* benefits */
+.section-header{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 0 10px;border-bottom:none;margin-bottom:10px;
+}
+.benefits-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px}
+.benefits-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.benefit-item{padding:14px 14px;border-right:1px solid var(--border);border-bottom:1px solid var(--border)}
+.benefit-item:nth-child(4n){border-right:none}
+.benefit-item:nth-last-child(-n+4){border-bottom:none}
+.benefit-name{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:5px}
+.benefit-val{font-size:16px;font-weight:700;font-family:var(--font-mono);color:var(--accent2)}
+.benefit-val.highlight{color:var(--accent)}
+.benefit-sub{font-size:10px;color:var(--muted);font-family:var(--font-mono);margin-top:2px}
+
+/* note */
+.note-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:12px 16px;
+  font-size:10px;color:var(--muted);
+  line-height:1.7;font-family:var(--font-mono);
+  margin-bottom:20px;
+}
+.note-box strong{color:var(--text)}
+
+/* placeholder */
+.placeholder{
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  min-height:440px;gap:16px;opacity:.35;
+}
+.placeholder svg{width:56px;height:56px;stroke:var(--muted);fill:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.placeholder p{font-size:14px;color:var(--muted);font-family:var(--font-mono);text-align:center;line-height:1.7}
+
+/* toast */
+.toast{
+  position:fixed;bottom:24px;right:24px;
+  background:var(--accent);color:var(--bg);
+  padding:12px 20px;border-radius:10px;
+  font-weight:700;font-size:13px;
+  opacity:0;transform:translateY(10px);
+  transition:all .3s;pointer-events:none;
+  z-index:1000;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* footer */
+footer{
+  text-align:center;padding:20px;
+  font-size:10px;color:var(--muted);
+  font-family:var(--font-mono);
+  border-top:1px solid var(--border);
+}
+footer a{color:var(--accent);text-decoration:none}
+footer a:hover{text-decoration:underline}
+
+/* ── RESPONSIVE ── */
+@media(max-width:960px){
+  .app{grid-template-columns:1fr}
+  .sidebar{height:auto;position:static}
+  .main{padding:20px 16px}
+  .breakdown-grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .gauge-row{grid-template-columns:1fr 1fr}
+  .benefits-grid{grid-template-columns:1fr 1fr}
+  .benefit-item:nth-child(2n){border-right:none}
+  .benefit-item:nth-child(4n){border-right:none}
+}
+@media(max-width:480px){
+  .metrics{grid-template-columns:1fr}
+  .gauge-row{grid-template-columns:1fr 1fr}
+  .top-bar{flex-direction:column}
+  .main-title{font-size:22px}
+}
+@media print{
+  .sidebar .calc-btn,.actions{display:none}
+  .sidebar{height:auto;position:static;page-break-after:avoid}
+  .app{grid-template-columns:1fr}
+  .breakdown-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- ══════════════════════════════════
+     SIDEBAR — INPUTS
+═══════════════════════════════════ -->
+<aside class="sidebar" role="complementary" aria-label="Panel de configuración">
+
+  <div class="logo" aria-label="NóminaMX">
+    <div class="logo-icon" aria-hidden="true">
+      <svg viewBox="0 0 20 20"><path d="M3 4h14v2H3zM3 9h14v2H3zM3 14h9v2H3z"/></svg>
+    </div>
+    <div>
+      <div class="logo-text">NóminaMX</div>
+      <div class="logo-sub">CDMX · 2024 · ISR + IMSS + INFONAVIT</div>
+    </div>
+  </div>
+
+  <!-- SALARIO -->
+  <div>
+    <div class="section-label">Salario base mensual</div>
+    <div class="field">
+      <label for="salary">Salario Mensual Bruto (MXN)</label>
+      <div class="salary-wrap">
+        <span class="salary-prefix" aria-hidden="true">$</span>
+        <input
+          type="number" id="salary"
+          placeholder="0.00" value="25000"
+          min="0" step="100"
+          aria-label="Salario mensual bruto en pesos mexicanos"
+        />
+      </div>
+    </div>
+  </div>
+
+  <!-- PERÍODO -->
+  <div>
+    <div class="section-label">Período de pago</div>
+    <div class="toggle-group" role="group" aria-label="Período de pago">
+      <button class="toggle-btn active" data-period="mensual">Mensual</button>
+      <button class="toggle-btn" data-period="quincenal">Quincenal</button>
+      <button class="toggle-btn" data-period="semanal">Semanal</button>
+      <button class="toggle-btn" data-period="diario">Diario</button>
+    </div>
+  </div>
+
+  <!-- TIPO -->
+  <div>
+    <div class="section-label">Tipo de empleado</div>
+    <div class="toggle-group" role="group" aria-label="Tipo de empleado">
+      <button class="toggle-btn active" data-type="empleado">Empleado</button>
+      <button class="toggle-btn" data-type="confianza">Confianza</button>
+    </div>
+  </div>
+
+  <!-- ANTIGÜEDAD -->
+  <div>
+    <div class="section-label">Antigüedad</div>
+    <div class="field">
+      <label for="years">Años trabajados</label>
+      <input
+        type="number" id="years"
+        placeholder="1" value="1"
+        min="0" max="50" step="1"
+        aria-label="Años de antigüedad"
+      />
+    </div>
+  </div>
+
+  <!-- JORNADA -->
+  <div>
+    <div class="section-label">Jornada laboral</div>
+    <div class="toggle-group" role="group" aria-label="Tipo de jornada">
+      <button class="toggle-btn active" data-jornada="completa">Completa</button>
+      <button class="toggle-btn" data-jornada="parcial">Parcial 50%</button>
+    </div>
+  </div>
+
+  <button class="calc-btn" id="calcBtn" aria-label="Calcular nómina">
+    Calcular nómina →
+  </button>
+
+  <div class="info-box" role="note">
+    <strong>Bases legales 2024</strong><br/>
+    UMA: $108.57/día · SMG CDMX: $278.80/día<br/>
+    IMSS cuotas vigentes LSS · ISR Art.96 LISR<br/>
+    Imp. Nóminas CDMX 3% · LFT reforma 2023<br/>
+    Aguinaldo 15 días · Prima vac. 25% · Tope 25 UMAs
+  </div>
+</aside>
+
+<!-- ══════════════════════════════════
+     MAIN — RESULTADOS
+═══════════════════════════════════ -->
+<main class="main" role="main">
+
+  <div class="top-bar">
+    <div>
+      <h1 class="main-title">Desglose de <span>Nómina</span></h1>
+      <div class="main-sub">Ciudad de México · Ley Federal del Trabajo · SAT 2024</div>
+    </div>
+    <div class="actions">
+      <button class="action-btn" id="printBtn" title="Imprimir / Guardar PDF">
+        <svg viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>
+        Imprimir / PDF
+      </button>
+      <button class="action-btn primary" id="copyBtn" title="Copiar resumen al portapapeles">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar resumen
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS AREA -->
+  <div id="resultsArea">
+    <div class="placeholder" role="status" aria-label="Sin resultados aún">
+      <svg viewBox="0 0 24 24">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M9 21V9"/>
+      </svg>
+      <p>Ingresa el salario mensual bruto<br/>y presiona <strong>Calcular nómina</strong></p>
+    </div>
+  </div>
+
+</main>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast" role="alert" aria-live="polite"></div>
+
+<!-- FOOTER -->
+<footer>
+  NóminaMX · Cálculos con fines informativos. Verifica con tu contador o área de RH. ·
+  <a href="https://titi-apps.com" target="_blank" rel="noopener">TiTi-Apps</a> ·
+  Datos: SAT, IMSS, INFONAVIT, DOF 2024
+</footer>
+
+<script>
+// ══════════════════════════════════════════════════════
+//  CONSTANTES 2024
+// ══════════════════════════════════════════════════════
+const UMA_DIARIA = 108.57;   // DOF 10-ene-2024
+const SMG_CDMX   = 278.80;   // DOF 01-ene-2024
+const DIAS_ANIO  = 365;
+
+// ISR Tarifa Mensual 2024 — Artículo 96 LISR
+// [Límite inferior, Límite superior, Cuota fija, Tasa %]
+const ISR_TABLE = [
+  [0.01,       746.04,    0,         1.92],
+  [746.05,     6332.05,   14.32,     6.40],
+  [6332.06,    11128.01,  371.83,    10.88],
+  [11128.02,   12935.82,  893.63,    16.00],
+  [12935.83,   15487.71,  1182.88,   17.92],
+  [15487.72,   31236.49,  1640.18,   21.36],
+  [31236.50,   49233.00,  5004.12,   23.52],
+  [49233.01,   78749.20,  9236.89,   30.00],
+  [78749.21,   104986.00, 17994.99,  32.00],
+  [104986.01,  314977.00, 26374.79,  34.00],
+  [314977.01,  Infinity,  97652.79,  35.00]
+];
+
+// Subsidio al Empleo Mensual — Artículo 97 LISR
+// [Límite inferior, Límite superior, Subsidio MXN]
+const SUBSIDIO_TABLE = [
+  [0,         1768.96,  407.02],
+  [1768.97,   2653.38,  406.83],
+  [2653.39,   3472.84,  406.62],
+  [3472.85,   3537.87,  392.77],
+  [3537.88,   4446.15,  382.46],
+  [4446.16,   4717.18,  354.23],
+  [4717.19,   5335.42,  324.87],
+  [5335.43,   6224.67,  294.63],
+  [6224.68,   7113.90,  253.54],
+  [7113.91,   7382.33,  217.61],
+  [7382.34,   Infinity, 0]
+];
+
+// IMSS — Cuotas Trabajador (% del SBC mensual)
+const IMSS_TRAB = {
+  enfMaternidad: 0.00375,  // Enf. y Maternidad
+  invalidezVida: 0.00625,  // Invalidez y Vida
+  cesantiaVejez: 0.01125,  // Cesantía en Edad Avanzada y Vejez
+};
+
+// IMSS — Cuotas Patrón
+const IMSS_PAT = {
+  enfMat_cuotaFija_pct: 0.204,   // Cuota fija: 20.40% de UMA diaria × 30 días
+  enfMat_excedente_pct: 0.011,   // 1.10% sobre excedente de 3 SMG
+  maternidad:   0.00700,
+  invalidezVida:0.01750,
+  riesgos:      0.00543,          // Clase I — prima promedio
+  guarderias:   0.01000,
+  retiro_SAR:   0.02000,
+  cesantiaVejez:0.03150,
+  infonavit:    0.05000,
+};
+
+// Impuesto sobre Nóminas CDMX
+const IMP_NOMINAS_CDMX = 0.03;   // 3% sobre nómina bruta (Ley Hacienda CDMX Art.178)
+
+// ══════════════════════════════════════════════════════
+//  UTILIDADES
+// ══════════════════════════════════════════════════════
+const fmt = n => new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',minimumFractionDigits:2}).format(n);
+const pct = (n,t) => t===0 ? '0.0%' : ((n/t)*100).toFixed(1)+'%';
+const clamp = (v,min,max) => Math.max(min,Math.min(max,v));
+
+function calcISR(base) {
+  for(const [li,ls,cf,t] of ISR_TABLE) {
+    if(base>=li && base<=ls) return cf + (base - li) * (t/100);
+  }
+  return 0;
+}
+
+function calcSubsidio(base) {
+  for(const [li,ls,s] of SUBSIDIO_TABLE) {
+    if(base>=li && base<=ls) return s;
+  }
+  return 0;
+}
+
+// Vacaciones por antigüedad — LFT Art.76 (reforma feb-2023)
+function diasVacaciones(años) {
+  const tabla = [0,12,14,16,18,20,22,24,26,28,30,32];
+  if(años<=0) return 12;
+  if(años<=10) return tabla[años];
+  // Quinquenios: cada 5 años adicionales → +2 días
+  const quinquenios = Math.floor((años-10)/5);
+  return 32 + quinquenios * 2;
+}
+
+// ══════════════════════════════════════════════════════
+//  ESTADO
+// ══════════════════════════════════════════════════════
+const state = {period:'mensual',type:'empleado',jornada:'completa'};
+let lastResult = null;
+
+// ══════════════════════════════════════════════════════
+//  CÁLCULO PRINCIPAL
+// ══════════════════════════════════════════════════════
+function calculate() {
+  const rawSalary = parseFloat(document.getElementById('salary').value)||0;
+  const yearsRaw  = parseInt(document.getElementById('years').value)||1;
+
+  if(rawSalary < SMG_CDMX * 30) {
+    const minSalario = SMG_CDMX * 30;
+    if(rawSalary > 0 && rawSalary < minSalario) {
+      showToast(`⚠️ Salario menor al mínimo CDMX (${fmt(minSalario)}/mes)`,true);
+    }
+  }
+
+  const factor = state.jornada==='parcial' ? 0.5 : 1;
+  const salarioBruto = rawSalary * factor;
+  const salarioDiario = salarioBruto / 30;
+
+  // Factor de integración (FI) — incluye proporcional de aguinaldo, vacaciones y prima
+  const vacDias    = diasVacaciones(yearsRaw);
+  const primaVac   = vacDias * 0.25;
+  const aguinDias  = 15; // mínimo legal
+  const FI = 1 + (vacDias + primaVac + aguinDias) / DIAS_ANIO;
+
+  // SBC diario y mensual — tope 25 UMAs
+  const SBC_diario    = salarioDiario * FI;
+  const SBC_tope      = UMA_DIARIA * 25;
+  const SBC_cap       = Math.min(SBC_diario, SBC_tope);
+  const SBC_mensual   = SBC_cap * 30;
+
+  // ── IMSS TRABAJADOR ──
+  const imss_t_enfMat   = SBC_mensual * IMSS_TRAB.enfMaternidad;
+  const imss_t_invVida  = SBC_mensual * IMSS_TRAB.invalidezVida;
+  const imss_t_cesantia = SBC_mensual * IMSS_TRAB.cesantiaVejez;
+  const totalIMSS_trab  = imss_t_enfMat + imss_t_invVida + imss_t_cesantia;
+
+  // ── ISR TRABAJADOR ──
+  const baseGravable = salarioBruto - totalIMSS_trab;
+  const isrBruto     = calcISR(baseGravable);
+  const subsidio     = calcSubsidio(baseGravable);
+  const isrNeto      = Math.max(0, isrBruto - subsidio);
+
+  // ── NETO EMPLEADO ──
+  const totalRetenciones = totalIMSS_trab + isrNeto;
+  const salarioNeto      = salarioBruto - totalRetenciones;
+
+  // ── IMSS PATRÓN ──
+  const tresSmg           = SMG_CDMX * 3;
+  const excedenteDiario   = Math.max(0, SBC_cap - tresSmg);
+  const pat_enfMat_fija   = IMSS_PAT.enfMat_cuotaFija_pct * UMA_DIARIA * 30;
+  const pat_enfMat_exc    = excedenteDiario * 30 * IMSS_PAT.enfMat_excedente_pct;
+  const pat_maternidad    = SBC_mensual * IMSS_PAT.maternidad;
+  const pat_invVida       = SBC_mensual * IMSS_PAT.invalidezVida;
+  const pat_riesgos       = SBC_mensual * IMSS_PAT.riesgos;
+  const pat_guarderias    = SBC_mensual * IMSS_PAT.guarderias;
+  const pat_retiro        = SBC_mensual * IMSS_PAT.retiro_SAR;
+  const pat_cesantia      = SBC_mensual * IMSS_PAT.cesantiaVejez;
+  const pat_infonavit     = SBC_mensual * IMSS_PAT.infonavit;
+  const impNominas        = salarioBruto * IMP_NOMINAS_CDMX;
+
+  const totalIMSS_pat     = pat_enfMat_fija + pat_enfMat_exc + pat_maternidad +
+                            pat_invVida + pat_riesgos + pat_guarderias +
+                            pat_retiro + pat_cesantia;
+  const costoTotalPatron  = salarioBruto + totalIMSS_pat + pat_infonavit + impNominas;
+
+  // ── PRESTACIONES ANUALES ──
+  const aguinaldoMonto   = salarioDiario * aguinDias;
+  const vacMonto         = salarioDiario * vacDias;
+  const primaVacMonto    = vacMonto * 0.25;
+  const fondoAhorro      = salarioBruto * 0.13; // bilateral estimado
+  const totalPaqueteAnual = salarioBruto*12 + aguinaldoMonto + vacMonto + primaVacMonto;
+
+  // Factor de multiplicación por período
+  const periodos = {mensual:1, quincenal:0.5, semanal:12/52, diario:1/30};
+  const factorPeriodo = periodos[state.period] || 1;
+  const labels = {mensual:'Mensual',quincenal:'Quincenal',semanal:'Semanal',diario:'Diario'};
+  const periodLabel = labels[state.period];
+
+  lastResult = {salarioBruto,salarioNeto,totalRetenciones,isrNeto,totalIMSS_trab,
+    costoTotalPatron,vacDias,FI,SBC_diario,SBC_mensual,aguinaldoMonto,vacMonto,
+    primaVacMonto,pat_infonavit,pat_retiro,fondoAhorro,totalPaqueteAnual,yearsRaw,periodLabel};
+
+  renderResults(lastResult, {
+    salarioBruto,salarioNeto,totalRetenciones,
+    imss_t_enfMat,imss_t_invVida,imss_t_cesantia,totalIMSS_trab,
+    baseGravable,isrBruto,subsidio,isrNeto,
+    pat_enfMat_fija,pat_enfMat_exc,pat_maternidad,pat_invVida,
+    pat_riesgos,pat_guarderias,pat_retiro,pat_cesantia,pat_infonavit,
+    impNominas,totalIMSS_pat,costoTotalPatron,
+    aguinaldoMonto,vacMonto,primaVacMonto,fondoAhorro,totalPaqueteAnual,
+    vacDias,FI,SBC_diario,SBC_mensual,
+    factorPeriodo,periodLabel,yearsRaw
+  });
+}
+
+// ══════════════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════════════
+function renderResults(r, d) {
+  const fp = d.factorPeriodo;
+  const pl = d.periodLabel;
+  const f  = v => fmt(v * fp);
+
+  const w = v => Math.min(99.5, parseFloat(pct(v, d.salarioBruto)));
+
+  document.getElementById('resultsArea').innerHTML = `
+
+    <!-- MÉTRICAS PRINCIPALES -->
+    <div class="metrics" role="region" aria-label="Métricas principales">
+      <div class="metric green">
+        <div class="metric-label">Salario neto ${pl.toLowerCase()}</div>
+        <div class="metric-val">${f(d.salarioNeto)}</div>
+        <div class="metric-pct">${pct(d.salarioNeto,d.salarioBruto)} del bruto</div>
+      </div>
+      <div class="metric red">
+        <div class="metric-label">Total retenciones ${pl.toLowerCase()}</div>
+        <div class="metric-val">${f(d.totalRetenciones)}</div>
+        <div class="metric-pct">IMSS ${pct(d.totalIMSS_trab,d.salarioBruto)} · ISR ${pct(d.isrNeto,d.salarioBruto)}</div>
+      </div>
+      <div class="metric blue">
+        <div class="metric-label">Costo total patrón</div>
+        <div class="metric-val">${f(d.costoTotalPatron)}</div>
+        <div class="metric-pct">${pct(d.costoTotalPatron,d.salarioBruto)} sobre salario bruto</div>
+      </div>
+    </div>
+
+    <!-- GAUGES -->
+    <div class="gauge-row" role="region" aria-label="Distribución porcentual">
+      <div class="gauge-item">
+        <div class="gauge-label">Neto / Bruto</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" style="width:${w(d.salarioNeto)}%;background:var(--accent)"></div></div>
+        <div class="gauge-pct" style="color:var(--accent)">${pct(d.salarioNeto,d.salarioBruto)}</div>
+      </div>
+      <div class="gauge-item">
+        <div class="gauge-label">ISR / Bruto</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" style="width:${w(d.isrNeto)}%;background:var(--accent3)"></div></div>
+        <div class="gauge-pct" style="color:var(--accent3)">${pct(d.isrNeto,d.salarioBruto)}</div>
+      </div>
+      <div class="gauge-item">
+        <div class="gauge-label">IMSS Trab. / Bruto</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" style="width:${w(d.totalIMSS_trab)}%;background:var(--accent2)"></div></div>
+        <div class="gauge-pct" style="color:var(--accent2)">${pct(d.totalIMSS_trab,d.salarioBruto)}</div>
+      </div>
+      <div class="gauge-item">
+        <div class="gauge-label">Carga Patrón Extra</div>
+        <div class="gauge-bar-wrap"><div class="gauge-bar" style="width:${Math.min(99,w(d.costoTotalPatron-d.salarioBruto))}%;background:var(--amber)"></div></div>
+        <div class="gauge-pct" style="color:var(--amber)">${pct(d.costoTotalPatron-d.salarioBruto,d.salarioBruto)}</div>
+      </div>
+    </div>
+
+    <!-- RETENCIONES Y CUOTAS -->
+    <div class="breakdown-grid" role="region" aria-label="Desglose detallado">
+
+      <!-- COLUMNA EMPLEADO -->
+      <div class="breakdown-card">
+        <div class="breakdown-header">
+          <div class="breakdown-dot" style="background:var(--accent3)"></div>
+          <div class="breakdown-title" style="color:var(--accent3)">Retenciones Empleado</div>
+          <span class="period-tag">${pl}</span>
+        </div>
+        <div>
+          <div class="row"><span class="row-label">Salario bruto</span><span class="row-val pos">${f(d.salarioBruto)}</span></div>
+          <div class="row-divider"></div>
+          <div class="row">
+            <span class="row-label">IMSS Enf. y Maternidad<em>0.375% del SBC · LSS Art.106</em></span>
+            <span class="row-val neg">−${f(d.imss_t_enfMat)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">IMSS Invalidez y Vida<em>0.625% del SBC · LSS Art.147</em></span>
+            <span class="row-val neg">−${f(d.imss_t_invVida)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">IMSS Cesantía y Vejez<em>1.125% del SBC · LSS Art.168</em></span>
+            <span class="row-val neg">−${f(d.imss_t_cesantia)}</span>
+          </div>
+          <div class="row-divider"></div>
+          <div class="row">
+            <span class="row-label">Base gravable ISR<em>Bruto − cuotas IMSS</em></span>
+            <span class="row-val neu">${f(d.baseGravable)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">ISR bruto (tarifa SAT)<em>Art.96 LISR — tabla mensual 2024</em></span>
+            <span class="row-val neg">−${f(d.isrBruto)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Subsidio al empleo<em>Art.97 LISR — tabla SAT 2024</em></span>
+            <span class="row-val pos">+${f(d.subsidio)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label"><strong>ISR neto a retener</strong></span>
+            <span class="row-val neg">−${f(d.isrNeto)}</span>
+          </div>
+          <div class="row-total">
+            <span>SALARIO NETO</span>
+            <span style="color:var(--accent)">${f(d.salarioNeto)}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- COLUMNA PATRÓN -->
+      <div class="breakdown-card">
+        <div class="breakdown-header">
+          <div class="breakdown-dot" style="background:var(--accent2)"></div>
+          <div class="breakdown-title" style="color:var(--accent2)">Cuotas Patronales</div>
+          <span class="period-tag">${pl}</span>
+        </div>
+        <div>
+          <div class="row">
+            <span class="row-label">Enf. Mat. Cuota Fija<em>20.40% UMA × 30 días · LSS Art.106-I</em></span>
+            <span class="row-val neg">−${f(d.pat_enfMat_fija)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Enf. Mat. Excedente<em>1.10% sobre excedente 3 SMG</em></span>
+            <span class="row-val neg">−${f(d.pat_enfMat_exc)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Maternidad<em>0.70% SBC · LSS Art.106-II</em></span>
+            <span class="row-val neg">−${f(d.pat_maternidad)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Invalidez y Vida<em>1.75% SBC · LSS Art.147</em></span>
+            <span class="row-val neg">−${f(d.pat_invVida)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Riesgos de Trabajo<em>0.543% SBC · Clase I promedio</em></span>
+            <span class="row-val neg">−${f(d.pat_riesgos)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Guarderías y Prestaciones<em>1.00% SBC · LSS Art.211</em></span>
+            <span class="row-val neg">−${f(d.pat_guarderias)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">SAR / Retiro<em>2.00% SBC — aportación AFORE</em></span>
+            <span class="row-val neg">−${f(d.pat_retiro)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">IMSS Cesantía y Vejez<em>3.150% SBC · LSS Art.168</em></span>
+            <span class="row-val neg">−${f(d.pat_cesantia)}</span>
+          </div>
+          <div class="row-divider"></div>
+          <div class="row">
+            <span class="row-label">INFONAVIT<em>5.00% SBC · Ley INFONAVIT Art.29-II</em></span>
+            <span class="row-val neg">−${f(d.pat_infonavit)}</span>
+          </div>
+          <div class="row">
+            <span class="row-label">Imp. Nóminas CDMX<em>3% sobre nómina bruta · Ley Hacienda CDMX</em></span>
+            <span class="row-val neg">−${f(d.impNominas)}</span>
+          </div>
+          <div class="row-total">
+            <span>COSTO TOTAL PATRÓN</span>
+            <span style="color:var(--accent2)">${f(d.costoTotalPatron)}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRESTACIONES DE LEY -->
+    <div class="section-header">
+      <div class="breakdown-dot" style="background:var(--accent);width:10px;height:10px"></div>
+      <h2 style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)">
+        Prestaciones de Ley — Valores Anuales
+      </h2>
+    </div>
+    <div class="benefits-card">
+      <div class="benefits-grid">
+        <div class="benefit-item">
+          <div class="benefit-name">Aguinaldo</div>
+          <div class="benefit-val">${fmt(d.aguinaldoMonto)}</div>
+          <div class="benefit-sub">15 días · Art.87 LFT<br/>Pago: dic 20</div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-name">Vacaciones (${d.vacDias} días)</div>
+          <div class="benefit-val">${fmt(d.vacMonto)}</div>
+          <div class="benefit-sub">${d.yearsRaw} año${d.yearsRaw>1?'s':''} · Art.76 LFT<br/>Reforma feb-2023</div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-name">Prima Vacacional</div>
+          <div class="benefit-val">${fmt(d.primaVacMonto)}</div>
+          <div class="benefit-sub">25% sobre vac. · Art.80 LFT</div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-name">INFONAVIT anual</div>
+          <div class="benefit-val">${fmt(d.pat_infonavit*12)}</div>
+          <div class="benefit-sub">Aportación patrón 5% SBC</div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-name">SAR / AFORE anual</div>
+          <div class="benefit-val">${fmt(d.pat_retiro*12)}</div>
+          <div class="benefit-sub">2% SBC · retiro</div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-name">Fondo de Ahorro</div>
+          <div class="benefit-val">${fmt(d.fondoAhorro*12)}</div>
+          <div class="benefit-sub">13% bilateral estimado</div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-name">Factor Integración</div>
+          <div class="benefit-val" style="color:var(--amber)">${d.FI.toFixed(5)}</div>
+          <div class="benefit-sub">SBC = Sal.Diario × FI<br/>SBC: ${fmt(d.SBC_diario)}/día</div>
+        </div>
+        <div class="benefit-item">
+          <div class="benefit-name">Total paquete anual</div>
+          <div class="benefit-val highlight">${fmt(d.totalPaqueteAnual)}</div>
+          <div class="benefit-sub">Bruto 12m + prest. mínimas</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note-box">
+      <strong>Notas y bases legales:</strong>
+      SBC con tope de 25 UMAs (${fmt(UMA_DIARIA*25)}/día = ${fmt(UMA_DIARIA*25*30)}/mes) ·
+      Riesgos de Trabajo Clase I (0.543%) — verificar prima anual IMSS ·
+      Impuesto sobre Nóminas CDMX 3% es obligación patronal (Ley de Hacienda CDMX Art.178) ·
+      Reforma LFT Feb-2023: primer año mínimo 12 días de vacaciones ·
+      ISR calculado sobre base neta (bruto − IMSS trabajador) ·
+      Subsidio al empleo no aplica si ingresos >$7,382.33/mes ·
+      Los cálculos son informativos; consulta a tu contador certificado.
+    </div>
+  `;
+}
+
+// ══════════════════════════════════════════════════════
+//  EVENTOS
+// ══════════════════════════════════════════════════════
+
+// Toggle buttons
+document.querySelectorAll('[data-period]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-period]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.period = btn.dataset.period;
+  });
+});
+document.querySelectorAll('[data-type]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-type]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.type = btn.dataset.type;
+  });
+});
+document.querySelectorAll('[data-jornada]').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('[data-jornada]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    state.jornada = btn.dataset.jornada;
+  });
+});
+
+// Calculate
+document.getElementById('calcBtn').addEventListener('click', calculate);
+document.getElementById('salary').addEventListener('keydown', e => { if(e.key==='Enter') calculate(); });
+document.getElementById('years').addEventListener('keydown', e => { if(e.key==='Enter') calculate(); });
+
+// Print / PDF
+document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+// Copy summary
+document.getElementById('copyBtn').addEventListener('click', () => {
+  if(!lastResult) { showToast('Primero calcula la nómina'); return; }
+  const r = lastResult;
+  const fp = {mensual:1,quincenal:0.5,semanal:12/52,diario:1/30}[state.period]||1;
+  const f = v => fmt(v*fp);
+  const text = `NóminaMX — Resumen ${r.periodLabel} (${new Date().toLocaleDateString('es-MX')})
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Salario bruto:        ${f(r.salarioBruto)}
+IMSS trabajador:      -${f(r.totalIMSS_trab)}
+ISR neto:             -${f(r.isrNeto)}
+SALARIO NETO:         ${f(r.salarioNeto)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Costo total patrón:   ${f(r.costoTotalPatron)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Prestaciones anuales:
+ · Aguinaldo (15d):   ${fmt(r.aguinaldoMonto)}
+ · Vacaciones (${r.vacDias}d):  ${fmt(r.vacMonto)}
+ · Prima vacacional:  ${fmt(r.primaVacMonto)}
+ · INFONAVIT anual:   ${fmt(r.pat_infonavit*12)}
+Factor integración:   ${r.FI.toFixed(5)}
+SBC diario:           ${fmt(r.SBC_diario)}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Calculado con NóminaMX · titi-apps.com`;
+  navigator.clipboard.writeText(text).then(()=>showToast('✓ Resumen copiado al portapapeles'));
+});
+
+// Toast
+function showToast(msg, warn=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = warn ? 'var(--amber)' : 'var(--accent)';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+
+// Auto-calculate on load
+calculate();
+</script>
+</body>
+</html>
